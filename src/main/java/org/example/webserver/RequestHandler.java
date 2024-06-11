@@ -10,12 +10,13 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.example.db.DataBase;
 import org.example.model.User;
 import org.example.util.HttpRequestUtils;
+import org.example.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,18 +41,25 @@ public class RequestHandler extends Thread {
             if (line == null) { // 마지막 줄 EOF를 null로 읽어옴
                 return;
             }
-            // 디버깅용 루프
-//            while (!"".equals(line)) {
-//                log.debug("header line : {}", line);
-//                line = br.readLine(); // 끝에 line을 읽어 EOF 처리
-//            }
 
+            // 요구사항 3. POST 방식으로 회원가입하기
             String path = HttpRequestUtils.getUrl(line);
-            if (path.contains("/user/create")) {
-                String[] tokens = path.split("\\?");
-                log.debug("tokens = {}", Arrays.toString(tokens));
+            Map<String, String> headers = new HashMap<>();
+            while (!line.isEmpty()) {
+                log.debug("header : {}", line);
+                line = br.readLine();
 
-                User user = createUser(tokens[1]);
+                String[] headerTokens = line.split(": ");
+                if (headerTokens.length == 2) {
+                    headers.put(headerTokens[0], headerTokens[1]); // content-length 구해서 넣기
+                }
+            }
+
+            if (path.startsWith("/user/create")) {
+                log.debug("path = {}", path);
+
+                String body = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
+                User user = createUser(body);
                 log.debug("user = {}", user);
 
                 path = "/index.html";
