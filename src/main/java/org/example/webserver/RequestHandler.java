@@ -10,7 +10,11 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Map;
 
+import org.example.db.DataBase;
+import org.example.model.User;
 import org.example.util.HttpRequestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,14 +47,38 @@ public class RequestHandler extends Thread {
 //            }
 
             String path = HttpRequestUtils.getUrl(line);
+            if (path.contains("/user/create")) {
+                String[] tokens = path.split("\\?");
+                log.debug("tokens = {}", Arrays.toString(tokens));
+
+                User user = createUser(tokens[1]);
+                log.debug("user = {}", user);
+
+                path = "/index.html";
+            }
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = Files.readAllBytes(new File("./webapp" + path).toPath());
+
             response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    private User createUser(final String queryString) {
+        Map<String, String> params = HttpRequestUtils.parseQueryString(queryString);
+        log.debug("requests = {}", params);
+
+        User user = new User(
+                params.get("userId"),
+                params.get("password"),
+                params.get("name"),
+                params.get("email")
+        );
+        DataBase.addUser(user);
+        return user;
     }
 
     private void response200Header(final DataOutputStream dos, final int lengthOfBodyContent) {
