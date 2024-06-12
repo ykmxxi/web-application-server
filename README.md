@@ -20,7 +20,7 @@
 ### 3. POST 방식으로 회원가입하기
 - http://localhost:8080/user/form.html 파일의 form 태그 method를 post로 변경
 - HTTP Header와 Body는 아래와 같음
-```text
+```http request
 POST /user/create HTTP/1.1
 Host: localhost:8080
 Connection: keep-alive
@@ -38,7 +38,7 @@ userId=javajigi&password=password&name=JaeSung
 - 회원가입을 완료하면 `/index.html` 페이지로 이동, 서블릿의 redirect 방식처럼 회원가입을 완료한 후 해당 페이지로 이동
 - 즉, 브라우저의 URL이 `/create`가 아닌 `/index.html`로 변경해야 한다
 - [302 status code](https://en.wikipedia.org/wiki/HTTP_302)
-```text
+```http request
 // client request
 GET /index.html HTTP/1.1
 Host: www.example.com
@@ -49,5 +49,23 @@ Location: http://www.iana.org/domains/example/
 ```
 
 ### 5. 로그인하기
+- 로그인 메뉴를 클릭하면 http://localhost:8080/login.html 이동해 로그인
+- 회원가입한 사용자로 로그인할 수 있어야 한다
+- 로그인이 성공하면 cookie를 활용해 로그인 상태를 유지할 수 있어야 한다
+- HTTP 응답(Response) Header에 Set-Cookie 를 추가해 로그인 성공 여부를 전달
+```http request
+HTTP/1.1 200 OK
+Content-Type: text/html
+Set-Cookie: logined=true
+```
+- HTTP 요청(Request) Header의 Cookie 헤더 값을 활용해 응답 헤더로 전달한 값을 추출
+```http request
+GET /index.html HTTP/1.1
+Host: localhost:8080
+Connection: keep-alive
+Accept: */*
+Cookie: logined=true
+```
+
 ### 6. 사용자 목록 출력
 ### 7. CSS 지원

@@ -69,6 +69,29 @@ public class RequestHandler extends Thread {
                 byte[] body = Files.readAllBytes(new File("./webapp" + path).toPath());
 
                 response302Header(dos);
+            } else if (path.equals("/user/login")) {
+                // 요구사항 5. 로그인하기
+                String requestBody = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
+                log.debug("Request Body = {}", requestBody);
+
+                Map<String, String> params = HttpRequestUtils.parseQueryString(requestBody);
+                log.debug("userId = {}, password = {}", params.get("userId"), params.get("password"));
+
+                User findUser = DataBase.findUserById(params.get("userId"));
+                if (findUser == null) {
+                    log.debug("User Not Found!");
+                    DataOutputStream dos = new DataOutputStream(out);
+                    response302Header(dos);
+                } else if (findUser.getPassword().equals(params.get("password"))) {
+                    log.debug("Login Success!");
+                    DataOutputStream dos = new DataOutputStream(out);
+                    response302HeaderWithCookie(dos, "logined=true");
+                } else {
+                    log.debug("Password Mismatch");
+                    DataOutputStream dos = new DataOutputStream(out);
+                    response302Header(dos);
+                }
+
             } else {
                 DataOutputStream dos = new DataOutputStream(out);
                 byte[] body = Files.readAllBytes(new File("./webapp" + path).toPath());
@@ -100,6 +123,17 @@ public class RequestHandler extends Thread {
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
             dos.writeBytes("Location: /index.html\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response302HeaderWithCookie(final DataOutputStream dos, final String cookie) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: /index.html\r\n");
+            dos.writeBytes("Set-Cookie: " + cookie + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
