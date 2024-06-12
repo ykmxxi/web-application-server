@@ -58,18 +58,25 @@ public class RequestHandler extends Thread {
             if (path.startsWith("/user/create")) {
                 log.debug("path = {}", path);
 
-                String body = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
-                User user = createUser(body);
+                String requestBody = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
+                User user = createUser(requestBody);
                 log.debug("user = {}", user);
 
                 path = "/index.html";
+
+                // 요구사항 4. 302 status code 적용
+                DataOutputStream dos = new DataOutputStream(out);
+                byte[] body = Files.readAllBytes(new File("./webapp" + path).toPath());
+
+                response302Header(dos);
+            } else {
+                DataOutputStream dos = new DataOutputStream(out);
+                byte[] body = Files.readAllBytes(new File("./webapp" + path).toPath());
+
+                response200Header(dos, body.length);
+                responseBody(dos, body);
             }
 
-            DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = Files.readAllBytes(new File("./webapp" + path).toPath());
-
-            response200Header(dos, body.length);
-            responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -87,6 +94,16 @@ public class RequestHandler extends Thread {
         );
         DataBase.addUser(user);
         return user;
+    }
+
+    private void response302Header(final DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: /index.html\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
     }
 
     private void response200Header(final DataOutputStream dos, final int lengthOfBodyContent) {

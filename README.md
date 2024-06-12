@@ -35,6 +35,19 @@ userId=javajigi&password=password&name=JaeSung
   - Http Header에서 Content-Length 구해서 메소드를 통해 Body 가져오기
 
 ### 4. 302 status code 적용
+- 회원가입을 완료하면 `/index.html` 페이지로 이동, 서블릿의 redirect 방식처럼 회원가입을 완료한 후 해당 페이지로 이동
+- 즉, 브라우저의 URL이 `/create`가 아닌 `/index.html`로 변경해야 한다
+- [302 status code](https://en.wikipedia.org/wiki/HTTP_302)
+```text
+// client request
+GET /index.html HTTP/1.1
+Host: www.example.com
+
+// server response
+HTTP/1.1 302 Found
+Location: http://www.iana.org/domains/example/
+```
+
 ### 5. 로그인하기
 ### 6. 사용자 목록 출력
 ### 7. CSS 지원
