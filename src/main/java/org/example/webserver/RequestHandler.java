@@ -81,7 +81,7 @@ public class RequestHandler extends Thread {
                 if (findUser == null) {
                     log.debug("User Not Found!");
                     DataOutputStream dos = new DataOutputStream(out);
-                    response302Header(dos);
+                    response302HeaderWithCookieLoginFail(dos, "logined=false");
                 } else if (findUser.getPassword().equals(params.get("password"))) {
                     log.debug("Login Success!");
                     DataOutputStream dos = new DataOutputStream(out);
@@ -89,7 +89,7 @@ public class RequestHandler extends Thread {
                 } else {
                     log.debug("Password Mismatch");
                     DataOutputStream dos = new DataOutputStream(out);
-                    response302Header(dos);
+                    response302HeaderWithCookieLoginFail(dos, "logined=false");
                 }
 
             } else {
@@ -133,6 +133,17 @@ public class RequestHandler extends Thread {
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
             dos.writeBytes("Location: /index.html\r\n");
+            dos.writeBytes("Set-Cookie: " + cookie + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response302HeaderWithCookieLoginFail(final DataOutputStream dos, final String cookie) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: /user/login_failed.html\r\n");
             dos.writeBytes("Set-Cookie: " + cookie + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
