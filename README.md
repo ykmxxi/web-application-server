@@ -68,4 +68,7 @@ Cookie: logined=true
 ```
 
 ### 6. 사용자 목록 출력
+- 접근한 사용자가 "로그인" 상태일 경우(Cookie 값이 logined=true) localhost:8080/user/list 접근 시 사용자 목록을 출력
+- 로그인 상태가 아닌 사용자가 접근하면 로그인 페이지로 이동
+
 ### 7. CSS 지원

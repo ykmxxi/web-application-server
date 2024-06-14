@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +46,8 @@ public class RequestHandler extends Thread {
             // 요구사항 3. POST 방식으로 회원가입하기
             String path = HttpRequestUtils.getUrl(line);
             Map<String, String> headers = new HashMap<>();
+
+            boolean logined = false;
             while (!line.isEmpty()) {
                 log.debug("header : {}", line);
                 line = br.readLine();
@@ -52,6 +55,9 @@ public class RequestHandler extends Thread {
                 String[] headerTokens = line.split(": ");
                 if (headerTokens.length == 2) {
                     headers.put(headerTokens[0], headerTokens[1]); // content-length 구해서 넣기
+                }
+                if (line.contains("Cookie")) {
+                    logined = isLogined(line);
                 }
             }
 
@@ -92,6 +98,24 @@ public class RequestHandler extends Thread {
                     response302HeaderWithCookieLoginFail(dos, "logined=false");
                 }
 
+            } else if (path.equals("/user/list")) {
+                // 요구사항 6. 사용자 목록 출력
+                if (logined) {
+                    Collection<User> users = DataBase.findAll();
+                    StringBuilder sb = new StringBuilder();
+                    for (User user : users) {
+                        sb.append(user.getUserId() + " : " + user.getName() + " : " + user.getEmail() + "<br/>");
+                    }
+                    byte[] body = sb.toString().getBytes();
+                    DataOutputStream dos = new DataOutputStream(out);
+                    response200Header(dos, body.length);
+                    responseBody(dos, body);
+                } else {
+                    DataOutputStream dos = new DataOutputStream(out);
+                    byte[] body = Files.readAllBytes(new File("./webapp/login.html").toPath());
+                    response200Header(dos, body.length);
+                    responseBody(dos, body);
+                }
             } else {
                 DataOutputStream dos = new DataOutputStream(out);
                 byte[] body = Files.readAllBytes(new File("./webapp" + path).toPath());
@@ -103,6 +127,16 @@ public class RequestHandler extends Thread {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    private boolean isLogined(final String line) {
+        String[] headerTokens = line.split(":");
+        Map<String, String> cookies = HttpRequestUtils.parseCookies(headerTokens[1].trim());
+        String value = cookies.get("logined");
+        if (value == null) {
+            return false;
+        }
+        return Boolean.parseBoolean(value);
     }
 
     private User createUser(final String queryString) {
